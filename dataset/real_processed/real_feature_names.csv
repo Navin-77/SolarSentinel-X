@@ -1,0 +1,11 @@
+Feature
+LDR
+DHT22_Temperature
+DHT22_Humidity
+DS18B20_Temperature
+Solar_Voltage
+Solar_Current
+Solar_Power
+Battery_Voltage
+Battery_Current
+Battery_Power

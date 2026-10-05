@@ -1,0 +1,48 @@
+SolarSentinel-X Real Sensor SHAP Report
+============================================================
+
+Total valid samples: 300
+Number of features: 10
+
+Features:
+- LDR
+- DHT22_Temperature
+- DHT22_Humidity
+- DS18B20_Temperature
+- Solar_Voltage
+- Solar_Current
+- Solar_Power
+- Battery_Voltage
+- Battery_Current
+- Battery_Power
+
+Global SHAP Feature Importance:
+            Feature  Mean_Absolute_SHAP
+        Solar_Power            0.071911
+                LDR            0.070972
+     DHT22_Humidity            0.069962
+  DHT22_Temperature            0.061913
+      Solar_Voltage            0.059861
+      Solar_Current            0.050047
+    Battery_Voltage            0.034845
+DS18B20_Temperature            0.034247
+    Battery_Current            0.000000
+      Battery_Power            0.000000
+
+Random Forest Feature Importance:
+            Feature  Random_Forest_Importance
+        Solar_Power                  0.162706
+     DHT22_Humidity                  0.155022
+  DHT22_Temperature                  0.138640
+                LDR                  0.137567
+      Solar_Voltage                  0.132428
+      Solar_Current                  0.111749
+    Battery_Voltage                  0.080990
+DS18B20_Temperature                  0.080897
+    Battery_Current                  0.000000
+      Battery_Power                  0.000000
+
+Class Labels:
+0 -> Critical
+1 -> Healthy
+2 -> Warning

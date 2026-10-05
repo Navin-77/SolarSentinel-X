@@ -1,0 +1,243 @@
+SOLARSENTINEL-X PROJECT STRUCTURE
+================================================================================
+Project Root: C:\Users\LENOVO\OneDrive\Desktop\SolarSentinel-X
+
+Excluded large/generated folders:
+venv, .venv, __pycache__, .git, node_modules, etc.
+
+SolarSentinel-X/
+├── analysis/
+│   └── dataset_analysis.py
+├── app/
+├── dashboard/
+│   ├── app.py
+│   ├── data_loader.py
+│   ├── logger.py
+│   └── real_app.py
+├── dataset/
+│   ├── processed/
+│   │   ├── charging_encoder.pkl
+│   │   ├── health_encoder.pkl
+│   │   ├── scaler.pkl
+│   │   ├── X_test.csv
+│   │   ├── X_train.csv
+│   │   ├── y_test.csv
+│   │   └── y_train.csv
+│   ├── raw/
+│   ├── real_autoencoder/
+│   │   ├── anomaly_distribution_by_health.csv
+│   │   ├── autoencoder_evaluation_results.csv
+│   │   ├── autoencoder_training_history.csv
+│   │   ├── normal_vs_anomaly.png
+│   │   ├── reconstruction_error_distribution.png
+│   │   ├── reconstruction_error_plot.png
+│   │   ├── reconstruction_errors_real.csv
+│   │   └── top_20_anomalies.csv
+│   ├── real_lstm/
+│   │   ├── lstm_real_predictions.csv
+│   │   ├── real_lstm_features.csv
+│   │   ├── real_lstm_label_mapping.pkl
+│   │   ├── real_lstm_scaler.pkl
+│   │   ├── X_test_real_lstm.npy
+│   │   ├── X_train_real_lstm.npy
+│   │   ├── y_test_real_lstm.npy
+│   │   └── y_train_real_lstm.npy
+│   ├── real_processed/
+│   │   ├── real_feature_names.csv
+│   │   ├── real_scaler.pkl
+│   │   ├── X_test_real.csv
+│   │   ├── X_train_real.csv
+│   │   ├── y_test_real.csv
+│   │   └── y_train_real.csv
+│   ├── real_shap/
+│   │   ├── global_shap_feature_importance.csv
+│   │   ├── random_forest_feature_importance.csv
+│   │   ├── real_sensor_predictions.csv
+│   │   ├── real_shap_report.txt
+│   │   ├── shap_bar_Critical.png
+│   │   ├── shap_bar_Healthy.png
+│   │   ├── shap_bar_Warning.png
+│   │   ├── shap_importance_Critical.csv
+│   │   ├── shap_importance_Healthy.csv
+│   │   ├── shap_importance_Warning.csv
+│   │   ├── shap_summary_Critical.png
+│   │   ├── shap_summary_Healthy.png
+│   │   ├── shap_summary_Warning.png
+│   │   └── shap_values_real.npy
+│   ├── real_training/
+│   │   ├── critical_nan_dataset.csv
+│   │   ├── new_real_sensor_dataset.csv
+│   │   ├── raw.csv
+│   │   ├── real_sensor_dataset.csv
+│   │   ├── real_sensor_dataset_old.csv
+│   │   └── warning_nan_dataset.csv
+│   ├── sequences/
+│   │   ├── X_sequences.npy
+│   │   ├── y_rul.npy
+│   │   ├── y_soc.npy
+│   │   └── y_soh.npy
+│   └── synthetic/
+│       ├── solar_microgrid_dataset.csv
+│       └── synthetic_dataset.csv
+├── decision_engine/
+│   ├── __init__.py
+│   ├── alert_manager.py
+│   ├── decision_engine.py
+│   ├── real_decision_engine.py
+│   ├── recommendation_engine.py
+│   ├── rules.py
+│   └── utils.py
+├── digital_twin/
+│   ├── real/
+│   │   ├── __init__.py
+│   │   ├── physical_components.py
+│   │   ├── real_twin.py
+│   │   ├── real_twin_state.py
+│   │   ├── sensor_models.py
+│   │   ├── twin_state.py
+│   │   ├── utils.py
+│   │   ├── visual_twin.py
+│   │   ├── what_if_simulator.py
+│   │   └── wiring.py
+│   ├── __init__.py
+│   ├── digital_twin.py
+│   └── model_loader.py
+├── documentation/
+│   ├── Architecture.md
+│   ├── Dataset.md
+│   ├── Project_Proposal.md
+│   └── Review1.md
+├── explainability/
+│   ├── __init__.py
+│   ├── real_shap_live.py
+│   ├── shap_analysis.py
+│   └── shap_real_analysis.py
+├── logs/
+│   └── prediction_log.csv
+├── models/
+│   ├── autoencoder/
+│   │   ├── history/
+│   │   │   └── training_history.csv
+│   │   ├── real/
+│   │   │   ├── autoencoder_real.keras
+│   │   │   ├── evaluate_autoencoder_real.py
+│   │   │   ├── real_autoencoder_features.csv
+│   │   │   ├── real_autoencoder_scaler.pkl
+│   │   │   ├── real_autoencoder_threshold.pkl
+│   │   │   └── train_autoencoder_real.py
+│   │   ├── saved_models/
+│   │   │   ├── autoencoder_model.keras
+│   │   │   └── threshold.npy
+│   │   ├── train_autoencoder.py
+│   │   └── utils.py
+│   ├── dataset/
+│   │   └── real_lstm/
+│   ├── lstm/
+│   │   ├── history/
+│   │   │   └── training_history.csv
+│   │   ├── real/
+│   │   │   ├── create_real_sequences.py
+│   │   │   ├── evaluate_lstm_real.py
+│   │   │   ├── lstm_real_model.keras
+│   │   │   ├── train_autoencoder_real.py
+│   │   │   └── train_lstm_real.py
+│   │   ├── saved_models/
+│   │   │   └── lstm_model.keras
+│   │   ├── __init__.py
+│   │   ├── create_sequences.py
+│   │   ├── evaluate_lstm.py
+│   │   ├── plot_history.py
+│   │   ├── predict.py
+│   │   ├── train_lstm.py
+│   │   └── utils.py
+│   ├── random_forest/
+│   │   ├── real_trained/
+│   │   │   ├── feature_names_real.csv
+│   │   │   ├── health_encoder_real.pkl
+│   │   │   ├── random_forest_real.pkl
+│   │   │   └── real_scaler.pkl
+│   │   ├── saved_models/
+│   │   │   └── random_forest_model.pkl
+│   │   ├── train_random_forest.py
+│   │   └── train_random_forest_real.py
+│   └── real_inference.py
+├── notebooks/
+├── predictive_maintenance/
+│   ├── __init__.py
+│   ├── diagnostic_recommendation_engine.py
+│   ├── maintenance_engine.py
+│   ├── predictive_health_analyzer.py
+│   ├── sensor_pattern_analyzer.py
+│   ├── temporal_trend_analyzer.py
+│   ├── test_predictive_health.py
+│   └── test_sensor_pattern.py
+├── preprocessing/
+│   ├── saved_objects/
+│   ├── preprocess.py
+│   └── preprocess_real.py
+├── realtime/
+│   ├── collect_real_data.py
+│   ├── real_data_logger.py
+│   ├── real_live_inference.py
+│   ├── real_system_controller.py
+│   ├── sensor_interface.py
+│   ├── serial_reader.py
+│   └── test_serial_simulator.py
+├── results/
+│   ├── autoencoder/
+│   │   ├── autoencoder_predictions.csv
+│   │   └── loss_curve.png
+│   ├── decision_engine/
+│   ├── digital_twin/
+│   ├── lstm/
+│   │   ├── evaluation_metrics.csv
+│   │   ├── loss_curve.png
+│   │   ├── mae_curve.png
+│   │   ├── rul_prediction.png
+│   │   ├── soc_prediction.png
+│   │   └── soh_prediction.png
+│   ├── random_forest/
+│   │   ├── feature_importance.csv
+│   │   └── feature_importance.png
+│   ├── shap/
+│   │   ├── local/
+│   │   │   ├── force_plot.png
+│   │   │   ├── prediction_report.txt
+│   │   │   └── waterfall_plot.png
+│   │   ├── feature_names.csv
+│   │   ├── shap_bar_plot.png
+│   │   ├── shap_report.txt
+│   │   ├── shap_summary_Critical.png
+│   │   ├── shap_summary_Healthy.png
+│   │   ├── shap_summary_plot.png
+│   │   ├── shap_summary_Warning.png
+│   │   └── shap_values.npy
+│   ├── correlation_matrix.png
+│   └── fault_type_distribution.png
+├── utilities/
+│   ├── config.py
+│   ├── helper.py
+│   └── logger.py
+├── .gitignore
+├── collect_critical_nan.py
+├── collect_real_dataset.py
+├── collect_warning_nan.py
+├── dataset_profile.py
+├── export_project_tree.py
+├── generate_dataset.py
+├── generate_real_dataset.py
+├── main.py
+├── normal.py
+├── prepare_final_real_dataset.py
+├── project_python_files.txt
+├── project_structure.txt
+├── README.md
+├── requirements.txt
+├── retrain_all_real.py
+├── test_decision_engine.py
+├── test_digital_twin.py
+├── test_environment.py
+├── test_model_loader.py
+├── test_sensor_loader.py
+├── test_system_pipeline.py
+└── validate_real_models.py

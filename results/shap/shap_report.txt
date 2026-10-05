@@ -1,0 +1,36 @@
+============================================================
+SolarSentinel-X
+SHAP ANALYSIS REPORT
+============================================================
+
+Model Information
+------------------------------
+Model Type : RandomForestClassifier
+Training Samples : 2000
+Number of Features : 24
+
+Detected Classes
+------------------------------
+0 : Critical
+1 : Healthy
+2 : Warning
+
+Top 10 Important Features
+------------------------------
+Battery_SOC                    0.077473
+Battery_Voltage                0.074275
+Battery_Stress_Index           0.046054
+Battery_Temperature            0.016679
+Battery_SOH                    0.015230
+Battery_RUL                    0.014518
+Efficiency_Loss                0.006646
+MPPT_Efficiency                0.006233
+Power_Balance                  0.002354
+Battery_Current                0.002295
+
+Generated Files
+------------------------------
+shap_summary_Healthy.png
+shap_summary_Warning.png
+shap_summary_Critical.png
+shap_bar_plot.png

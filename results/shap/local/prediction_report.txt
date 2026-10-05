@@ -1,0 +1,33 @@
+============================================================
+LOCAL SHAP EXPLANATION
+============================================================
+
+Sample Index : 0
+Predicted Class : Warning
+
+Feature Values
+----------------------------------------
+Hour                           -0.7953
+Day                            -0.7443
+Solar_Irradiance               -0.7905
+Ambient_Temperature            0.2653
+Humidity                       0.2778
+Panel_Voltage                  -0.7904
+Panel_Current                  -0.7905
+Panel_Power                    -0.7859
+Panel_Temperature              -0.5378
+MPPT_Input_Voltage             -0.8208
+MPPT_Output_Voltage            -0.0000
+MPPT_Efficiency                -2.9821
+Battery_Voltage                -1.1193
+Battery_Current                -0.3758
+Battery_SOC                    -1.1211
+Battery_SOH                    0.2090
+Battery_RUL                    0.2090
+Battery_Temperature            -0.5904
+Charging_Status                0.7516
+Load_Power                     -0.8549
+Load_Current                   -0.8544
+Power_Balance                  -0.3338
+Battery_Stress_Index           0.6012
+Efficiency_Loss                2.9821
