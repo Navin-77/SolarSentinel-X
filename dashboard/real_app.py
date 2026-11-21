@@ -331,13 +331,25 @@ def read_sensor_sample():
 
         try:
 
-            parsed = parse_sensor_line(
-                line
-            )
+            
+            
+            parsed = parse_sensor_line(line)
 
-            valid, failed_sensor = validate_sensor_data(
-                parsed
-            )
+            # Convert INA219 readings to the model's expected units
+            # Voltage: V -> V (no conversion)
+            # Current: mA -> A
+            # Power:   mW -> W
+
+            parsed["ina1_current"] = float(parsed["ina1_current"])
+            parsed["ina1_power"] = float(parsed["ina1_power"])
+
+            parsed["ina2_current"] = float(parsed["ina2_current"]) / 1000.0
+            parsed["ina2_power"] = float(parsed["ina2_power"]) / 1000.0
+
+            # Keep sensor validation enabled
+            valid, failed_sensor = validate_sensor_data(parsed)
+
+
 
             if not valid:
 
@@ -593,6 +605,31 @@ st.sidebar.header(
     "System Control"
 )
 
+
+from timeseries_monitor import start_timeseries_monitor
+
+CURRENT_SENSOR_DATA = {}
+CURRENT_DECISION_STATUS = "UNKNOWN"
+
+
+def _get_ts_sensor_data():
+    return dict(CURRENT_SENSOR_DATA) if isinstance(CURRENT_SENSOR_DATA, dict) else {}
+
+
+def _get_ts_decision_status():
+    return str(CURRENT_DECISION_STATUS or "UNKNOWN")
+
+
+def _stop_timeseries_monitor_threads():
+    for key in ("ts_recorder", "ts_watchdog"):
+        thread = st.session_state.get(key)
+        if thread is not None:
+            try:
+                thread.stop()
+            except Exception:
+                pass
+            st.session_state[key] = None
+
 if st.session_state.running:
 
     if st.sidebar.button(
@@ -600,6 +637,7 @@ if st.session_state.running:
     ):
 
         st.session_state.running = False
+        _stop_timeseries_monitor_threads()
 
 else:
 
@@ -611,6 +649,10 @@ else:
 
         if connect_serial():
 
+            if not st.session_state.get("ts_recorder") or not st.session_state.get("ts_watchdog"):
+                _rec, _wd = start_timeseries_monitor(_get_ts_sensor_data, _get_ts_decision_status)
+                st.session_state["ts_recorder"] = _rec
+                st.session_state["ts_watchdog"] = _wd
             st.session_state.running = True
 
             st.rerun()
@@ -691,6 +733,9 @@ if not st.session_state.running:
 initialize_system()
 
 sensor_data = read_sensor_sample()
+if isinstance(sensor_data, dict):
+    CURRENT_SENSOR_DATA.clear()
+    CURRENT_SENSOR_DATA.update(sensor_data)
 
 if sensor_data is not None:
 
@@ -1478,6 +1523,7 @@ if decision is not None:
         "🧠 Decision Engine"
     )
 
+    CURRENT_DECISION_STATUS = str(decision.get("overall_status", "UNKNOWN"))
     st.subheader(
         decision["overall_status"]
     )

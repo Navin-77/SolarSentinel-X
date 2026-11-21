@@ -214,15 +214,7 @@ def train_real_random_forest():
         )
 
     # -------------------------------------------------
-    # Feature Scaling
-    # -------------------------------------------------
-
-    scaler = StandardScaler()
-
-    X_scaled = scaler.fit_transform(X)
-
-    # -------------------------------------------------
-    # Train/Test Split
+    # Train/Test Split (Leak-Free: Before Scaling)
     # -------------------------------------------------
 
     class_counts = y.value_counts()
@@ -232,9 +224,9 @@ def train_real_random_forest():
         and class_counts.min() >= 2
     ):
 
-        X_train, X_test, y_train, y_test = (
+        X_train_raw, X_test_raw, y_train, y_test = (
             train_test_split(
-                X_scaled,
+                X,
                 y_encoded,
                 test_size=0.20,
                 random_state=42,
@@ -251,7 +243,16 @@ def train_real_random_forest():
 
         return
 
-    print("\nDataset Split:")
+    # -------------------------------------------------
+    # Feature Scaling (Fit on Train ONLY)
+    # -------------------------------------------------
+
+    scaler = StandardScaler()
+
+    X_train = scaler.fit_transform(X_train_raw)
+    X_test = scaler.transform(X_test_raw)
+
+    print("\nDataset Split (Leak-Free):")
 
     print(
         f"Training samples : {len(X_train)}"
@@ -437,19 +438,19 @@ def train_real_random_forest():
     print("=" * 70)
 
     print(
-        f"\n✓ {model_path}"
+        f"\n[OK] {model_path}"
     )
 
     print(
-        f"✓ {scaler_path}"
+        f"[OK] {scaler_path}"
     )
 
     print(
-        f"✓ {encoder_path}"
+        f"[OK] {encoder_path}"
     )
 
     print(
-        f"✓ {feature_path}"
+        f"[OK] {feature_path}"
     )
 
 

@@ -130,7 +130,7 @@ SolarSentinel-X/
 
 # Developed By
 
-**Harish**
+**Navin Balaji M**
 
 B.Tech Computer and Communication Engineering
 

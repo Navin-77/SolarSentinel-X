@@ -18,29 +18,29 @@ Features:
 
 Global SHAP Feature Importance:
             Feature  Mean_Absolute_SHAP
-        Solar_Power            0.071911
-                LDR            0.070972
-     DHT22_Humidity            0.069962
-  DHT22_Temperature            0.061913
-      Solar_Voltage            0.059861
-      Solar_Current            0.050047
-    Battery_Voltage            0.034845
-DS18B20_Temperature            0.034247
-    Battery_Current            0.000000
-      Battery_Power            0.000000
+    Battery_Voltage            0.111463
+                LDR            0.089293
+     DHT22_Humidity            0.050185
+  DHT22_Temperature            0.048094
+      Solar_Current            0.043822
+DS18B20_Temperature            0.036162
+      Solar_Voltage            0.033064
+        Solar_Power            0.030503
+    Battery_Current            0.011585
+      Battery_Power            0.000897
 
 Random Forest Feature Importance:
             Feature  Random_Forest_Importance
-        Solar_Power                  0.162706
-     DHT22_Humidity                  0.155022
-  DHT22_Temperature                  0.138640
-                LDR                  0.137567
-      Solar_Voltage                  0.132428
-      Solar_Current                  0.111749
-    Battery_Voltage                  0.080990
-DS18B20_Temperature                  0.080897
-    Battery_Current                  0.000000
-      Battery_Power                  0.000000
+    Battery_Voltage                  0.259750
+                LDR                  0.209695
+  DHT22_Temperature                  0.112407
+      Solar_Current                  0.098563
+     DHT22_Humidity                  0.091839
+DS18B20_Temperature                  0.078940
+        Solar_Power                  0.061006
+      Solar_Voltage                  0.060991
+    Battery_Current                  0.025665
+      Battery_Power                  0.001145
 
 Class Labels:
 0 -> Critical

@@ -186,49 +186,80 @@ class RealDecisionEngine:
         self,
         rf_health,
         anomaly_status,
-        lstm_health=None
+        lstm_health=None,
+        sensor_data=None,
     ):
         """
         Run the complete real decision process.
+        Handles sensor validation, sensor fault suppression, and night/standby normal classification.
         """
+        # Lazy import to avoid heavy loading if not needed
+        from models.real_inference import RealModelInference
 
-        health_result = self.evaluate_health(
-            rf_health
-        )
+        # ---------- Sensor validation and fault handling ----------
+        if sensor_data is not None:
+            try:
+                # validate_sensor_data will raise ValueError with fault details if any
+                RealModelInference().validate_sensor_data(sensor_data)
+            except ValueError as err:
+                # Fault detected: override to critical status
+                overall_status = "CRITICAL"
+                recommendation = self.generate_recommendation(overall_status)
+                alert = self.generate_alert(overall_status)
+                result = {
+                    "health": {"status": "CRITICAL", "message": str(err)},
+                    "anomaly": {"status": "NORMAL", "message": "No anomaly detected."},
+                    "temporal_health": {"status": "NORMAL", "message": "Temporal model unavailable."},
+                    "overall_status": overall_status,
+                    "recommendation": recommendation,
+                    "alert": alert,
+                }
+                self.last_decision = result
+                return result
 
-        anomaly_result = self.evaluate_anomaly(
-            anomaly_status
-        )
+            # ---------- Night/standby detection ----------
+            try:
+                ldr = float(sensor_data.get("LDR", 0))
+                solar_power = float(sensor_data.get("Solar_Power", 0))
+                battery_voltage = float(sensor_data.get("Battery_Voltage", 0))
+            except (TypeError, ValueError):
+                ldr = solar_power = battery_voltage = None
 
-        temporal_result = self.evaluate_temporal_health(
-            lstm_health
-        )
+            if ldr is not None and solar_power is not None and battery_voltage is not None:
+                # High LDR (low light), zero solar power, healthy battery indicates night/standby
+                if ldr > 1100 and solar_power == 0 and 3.0 <= battery_voltage <= 15.0:
+                    overall_status = "NORMAL"
+                    recommendation = self.generate_recommendation(overall_status)
+                    alert = self.generate_alert(overall_status)
+                    result = {
+                        "health": {"status": "NORMAL", "message": "Night/standby operation detected."},
+                        "anomaly": {"status": "NORMAL", "message": "No anomaly detected."},
+                        "temporal_health": {"status": "NORMAL", "message": "Temporal model unavailable."},
+                        "overall_status": overall_status,
+                        "recommendation": recommendation,
+                        "alert": alert,
+                    }
+                    self.last_decision = result
+                    return result
 
+        # ---------- Standard AI decision flow ----------
+        health_result = self.evaluate_health(rf_health)
+        anomaly_result = self.evaluate_anomaly(anomaly_status)
+        temporal_result = self.evaluate_temporal_health(lstm_health)
         overall_status = self.evaluate_overall_status(
-            health_result,
-            anomaly_result,
-            temporal_result
+            health_result, anomaly_result, temporal_result
         )
-
-        recommendation = self.generate_recommendation(
-            overall_status
-        )
-
-        alert = self.generate_alert(
-            overall_status
-        )
-
+        recommendation = self.generate_recommendation(overall_status)
+        alert = self.generate_alert(overall_status)
         result = {
             "health": health_result,
             "anomaly": anomaly_result,
             "temporal_health": temporal_result,
             "overall_status": overall_status,
             "recommendation": recommendation,
-            "alert": alert
+            "alert": alert,
         }
-
         self.last_decision = result
-
         return result
 
 

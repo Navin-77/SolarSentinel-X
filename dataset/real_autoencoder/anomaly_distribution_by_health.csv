@@ -1,4 +1,4 @@
 System_Health,Anomaly,Normal
-Critical,7,93
-Healthy,1,99
-Warning,7,93
+Critical,100,0
+Healthy,5,95
+Warning,90,10

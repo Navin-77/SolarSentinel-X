@@ -45,6 +45,9 @@ from digital_twin.real.real_twin import RealDigitalTwin
 from explainability.real_shap_live import RealSHAPExplainer
 from decision_engine.real_decision_engine import RealDecisionEngine
 
+# Timeseries monitoring
+from timeseries_monitor import start_timeseries_monitor
+
 # Predictive Maintenance
 from predictive_maintenance.sensor_pattern_analyzer import SensorPatternAnalyzer
 from predictive_maintenance.maintenance_engine import MaintenanceEngine
@@ -52,6 +55,17 @@ from predictive_maintenance.temporal_trend_analyzer import TemporalTrendAnalyzer
 from predictive_maintenance.predictive_health_analyzer import (
     PredictiveHealthAnalyzer
 )
+
+CURRENT_SENSOR_DATA: dict = {}
+CURRENT_DECISION_STATUS: str = "UNKNOWN"
+
+def get_sensor_data() -> dict:
+    """Return the latest raw sensor snapshot for timeseries monitoring."""
+    return CURRENT_SENSOR_DATA
+
+def get_decision_status() -> str:
+    """Return the latest overall decision status for timeseries monitoring."""
+    return CURRENT_DECISION_STATUS
 
 # ==========================================================
 # CONFIGURATION
@@ -317,6 +331,8 @@ def display_decision(decision):
     print("REAL DECISION ENGINE")
     print("-" * 60)
 
+    global CURRENT_DECISION_STATUS
+    CURRENT_DECISION_STATUS = str(decision.get("overall_status", "UNKNOWN"))
     print(
         f"Overall Status : "
         f"{decision['overall_status']}"
@@ -392,6 +408,13 @@ def run():
         print("Waiting for real sensor data...")
         print("Press Ctrl+C to stop.\n")
 
+        # ------------------------------------------------
+        # START TIMESERIES MONITORING
+        # ------------------------------------------------
+        recorder, watchdog = start_timeseries_monitor(get_sensor_data, get_decision_status)
+        # ------------------------------------------------
+        # START MAIN LOOP
+        # ------------------------------------------------
         while True:
 
             line = (
@@ -455,6 +478,7 @@ def run():
                 sensor_data = convert_sensor_data(
                     parsed_data
                 )
+                CURRENT_SENSOR_DATA = sensor_data
 
             except Exception as e:
 
@@ -720,6 +744,13 @@ def run():
 
     finally:
 
+        for _obj_name in ("recorder", "watchdog"):
+            _obj = locals().get(_obj_name)
+            if _obj is not None:
+                try:
+                    _obj.stop()
+                except Exception:
+                    pass
         try:
             ser.close()
         except:

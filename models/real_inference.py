@@ -217,6 +217,53 @@ class RealModelInference:
     # ========================================================
 
     def validate_sensor_data(self, sensor_data):
+        """Validate sensor data with range checks, NaN/Inf detection, and derive DS18B20 temperature.
+        Raises ValueError with the faulty sensor name if a fault is detected.
+        """
+        # Ensure all required features are present
+        missing = [feature for feature in FEATURE_NAMES if feature not in sensor_data]
+        if missing:
+            raise ValueError("Missing sensor features: " + ", ".join(missing))
+
+        # Physical acceptable ranges (excluding DS18B20 which is derived)
+        ranges = {
+            "DS18B20_Temperature": (-20.0, 100.0),
+            "LDR": (0, 2000),
+            "DHT22_Temperature": (-40, 125),
+            "DHT22_Humidity": (0, 100),
+            "Solar_Voltage": (0, 30),
+            "Solar_Current": (-5, 5),
+            "Solar_Power": (0, 2000),
+            "Battery_Voltage": (0, 15),
+            "Battery_Current": (-10, 10),
+            "Battery_Power": (-2000, 2000),
+        }
+        values = []
+        for feature in FEATURE_NAMES:
+            raw_val = sensor_data[feature]
+            if feature == "DS18B20_Temperature" and (
+                raw_val is None or (isinstance(raw_val, float) and not np.isfinite(raw_val))
+            ):
+                value = float("nan")
+            else:
+                try:
+                    value = float(raw_val)
+                except (TypeError, ValueError):
+                    raise ValueError(f"Invalid value for {feature}: {raw_val}")
+                if not np.isfinite(value):
+                    raise ValueError(f"Invalid numeric value for {feature}: {value}")
+                low, high = ranges[feature]
+                if not (low <= value <= high):
+                    raise ValueError(f"Sensor fault: {feature} out of range ({value})")
+            values.append(value)
+        # Derive DS18B20 temperature from DHT22 temperature
+        dht22_temp = values[FEATURE_NAMES.index("DHT22_Temperature")]
+        ds18b20_temp = 0.786428 * dht22_temp + 5.217375
+        ds18b20_idx = FEATURE_NAMES.index("DS18B20_Temperature")
+        values[ds18b20_idx] = ds18b20_temp
+        return np.array(values, dtype=float)
+
+    def _old_validate_sensor_data(self, sensor_data):
 
         missing = [
             feature

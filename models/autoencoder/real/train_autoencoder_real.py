@@ -8,6 +8,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 
 # ============================================================
@@ -79,7 +80,7 @@ BATCH_SIZE = 16
 # ============================================================
 
 print("=" * 60)
-print("REAL SENSOR AUTOENCODER TRAINING")
+print("REAL SENSOR AUTOENCODER TRAINING (HEALTHY MANIFOLD)")
 print("=" * 60)
 
 
@@ -90,7 +91,6 @@ print("=" * 60)
 df = pd.read_csv(DATA_PATH)
 
 print("\nDataset loaded successfully!")
-
 print("Rows    :", len(df))
 print("Columns :", len(df.columns))
 
@@ -112,42 +112,48 @@ if missing_features:
 
 
 # ============================================================
-# CLEAN DATA
+# SELECT HEALTHY DATA (DAYLIGHT + NIGHT/STANDBY)
 # ============================================================
 
-df = df[FEATURES].copy()
+df_healthy = df[df["System_Health"] == "Healthy"].copy()
 
-df = df.apply(
+print("\nHealthy samples available for Autoencoder training:")
+print(f"Total Healthy rows: {len(df_healthy)}")
+
+df_healthy_features = df_healthy[FEATURES].apply(
     pd.to_numeric,
     errors="coerce"
+).dropna()
+
+print(f"Valid numeric Healthy rows: {len(df_healthy_features)}")
+
+X_healthy = df_healthy_features.values.astype(np.float32)
+
+
+# ============================================================
+# TRAIN / VALIDATION SPLIT (LEAK-FREE)
+# ============================================================
+
+X_train_raw, X_val_raw = train_test_split(
+    X_healthy,
+    test_size=0.20,
+    random_state=42
 )
 
-df = df.dropna()
-
-print("\nValid numeric rows :", len(df))
-
-
-# ============================================================
-# FEATURE MATRIX
-# ============================================================
-
-X = df.values.astype(np.float32)
-
-print(
-    "Feature matrix shape :",
-    X.shape
-)
+print(f"Healthy Training samples   : {len(X_train_raw)}")
+print(f"Healthy Validation samples : {len(X_val_raw)}")
 
 
 # ============================================================
-# NORMALIZATION
+# NORMALIZATION (FIT ON TRAIN ONLY)
 # ============================================================
 
 scaler = StandardScaler()
 
-X_scaled = scaler.fit_transform(X)
+X_train = scaler.fit_transform(X_train_raw)
+X_val = scaler.transform(X_val_raw)
 
-print("\nScaling completed.")
+print("\nScaling completed (fit on healthy train split only).")
 
 
 # ============================================================
@@ -169,7 +175,7 @@ joblib.dump(
 # AUTOENCODER ARCHITECTURE
 # ============================================================
 
-input_dim = X_scaled.shape[1]
+input_dim = X_train.shape[1]
 
 print("\n" + "=" * 60)
 print("AUTOENCODER ARCHITECTURE")
@@ -226,17 +232,17 @@ decoded = Dense(
 output_layer = Dense(
     input_dim,
     activation="linear",
-    name="reconstruction"
+    name="sensor_reconstruction"
 )(decoded)
 
 
-# ============================================================
-# CREATE MODEL
-# ============================================================
+# ------------------------------------------------------------
+# COMPLETE AUTOENCODER
+# ------------------------------------------------------------
 
 autoencoder = Model(
-    input_layer,
-    output_layer,
+    inputs=input_layer,
+    outputs=output_layer,
     name="SolarSentinelX_Real_Autoencoder"
 )
 
@@ -250,16 +256,11 @@ autoencoder.compile(
     loss="mse"
 )
 
-
-# ============================================================
-# MODEL SUMMARY
-# ============================================================
-
 autoencoder.summary()
 
 
 # ============================================================
-# MODEL PATH
+# MODEL PATH & CALLBACKS
 # ============================================================
 
 model_path = os.path.join(
@@ -267,14 +268,9 @@ model_path = os.path.join(
     "autoencoder_real.keras"
 )
 
-
-# ============================================================
-# CALLBACKS
-# ============================================================
-
 early_stopping = EarlyStopping(
     monitor="val_loss",
-    patience=10,
+    patience=15,
     restore_best_weights=True,
     verbose=1
 )
@@ -296,9 +292,9 @@ print("STARTING AUTOENCODER TRAINING")
 print("=" * 60)
 
 history = autoencoder.fit(
-    X_scaled,
-    X_scaled,
-    validation_split=0.20,
+    X_train,
+    X_train,
+    validation_data=(X_val, X_val),
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     shuffle=True,
@@ -311,64 +307,60 @@ history = autoencoder.fit(
 
 
 # ============================================================
-# RECONSTRUCTION
+# RECONSTRUCTION ERROR ON NORMAL DATA
 # ============================================================
 
 print("\n" + "=" * 60)
-print("CALCULATING RECONSTRUCTION ERROR")
+print("CALCULATING RECONSTRUCTION ERROR (NORMAL HEALTHY)")
 print("=" * 60)
 
-X_reconstructed = autoencoder.predict(
-    X_scaled,
+# Evaluate reconstruction error on healthy data
+X_healthy_scaled = scaler.transform(X_healthy)
+X_healthy_reconstructed = autoencoder.predict(
+    X_healthy_scaled,
     verbose=0
 )
 
-
-# ============================================================
-# RECONSTRUCTION ERROR
-# ============================================================
-
-reconstruction_errors = np.mean(
+healthy_reconstruction_errors = np.mean(
     np.square(
-        X_scaled - X_reconstructed
+        X_healthy_scaled - X_healthy_reconstructed
     ),
     axis=1
 )
 
 
 # ============================================================
-# THRESHOLD
+# THRESHOLD CALCULATION
 # ============================================================
 
-threshold = np.percentile(
-    reconstruction_errors,
+threshold = float(np.percentile(
+    healthy_reconstruction_errors,
     95
-)
-
-
-print(
-    "\nReconstruction Error Mean :",
-    f"{np.mean(reconstruction_errors):.6f}"
-)
+))
 
 print(
-    "Reconstruction Error Std  :",
-    f"{np.std(reconstruction_errors):.6f}"
+    "\nNormal Reconstruction Error Mean :",
+    f"{np.mean(healthy_reconstruction_errors):.6f}"
 )
 
 print(
-    "Reconstruction Error Max  :",
-    f"{np.max(reconstruction_errors):.6f}"
+    "Normal Reconstruction Error Std  :",
+    f"{np.std(healthy_reconstruction_errors):.6f}"
 )
 
 print(
-    "Anomaly Threshold (95%)   :",
+    "Normal Reconstruction Error Max  :",
+    f"{np.max(healthy_reconstruction_errors):.6f}"
+)
+
+print(
+    "Anomaly Threshold (95th %)       :",
     f"{threshold:.6f}"
 )
 
 
 # ============================================================
-# SAVE THRESHOLD
+# SAVE THRESHOLD & FEATURES
 # ============================================================
 
 threshold_path = os.path.join(
@@ -380,11 +372,6 @@ joblib.dump(
     threshold,
     threshold_path
 )
-
-
-# ============================================================
-# SAVE FEATURE NAMES
-# ============================================================
 
 feature_path = os.path.join(
     OUTPUT_DIR,
@@ -400,7 +387,7 @@ pd.DataFrame({
 
 
 # ============================================================
-# SAVE RECONSTRUCTION ERRORS
+# SAVE RECONSTRUCTION ERRORS & HISTORY
 # ============================================================
 
 error_path = os.path.join(
@@ -409,24 +396,14 @@ error_path = os.path.join(
 )
 
 error_df = pd.DataFrame({
-    "Reconstruction_Error":
-        reconstruction_errors
+    "Reconstruction_Error": healthy_reconstruction_errors
 })
-
-error_df["Anomaly"] = (
-    error_df["Reconstruction_Error"]
-    > threshold
-)
+error_df["Anomaly"] = error_df["Reconstruction_Error"] > threshold
 
 error_df.to_csv(
     error_path,
     index=False
 )
-
-
-# ============================================================
-# SAVE TRAINING HISTORY
-# ============================================================
 
 history_path = os.path.join(
     DATA_OUTPUT_DIR,
@@ -440,82 +417,15 @@ pd.DataFrame(
     index=False
 )
 
-
-# ============================================================
-# FINAL RESULTS
-# ============================================================
-
-anomaly_count = np.sum(
-    reconstruction_errors > threshold
-)
-
-normal_count = len(
-    reconstruction_errors
-) - anomaly_count
-
-
-print("\n" + "=" * 60)
-print("AUTOENCODER RESULTS")
-print("=" * 60)
-
-print(
-    "Total samples    :",
-    len(reconstruction_errors)
-)
-
-print(
-    "Normal samples   :",
-    normal_count
-)
-
-print(
-    "Anomalous samples:",
-    anomaly_count
-)
-
-print(
-    "Anomaly rate     :",
-    f"{(anomaly_count / len(reconstruction_errors)) * 100:.2f}%"
-)
-
-
-# ============================================================
-# FILES
-# ============================================================
-
 print("\n" + "=" * 60)
 print("FILES SAVED")
 print("=" * 60)
-
-print(
-    "Model     :",
-    model_path
-)
-
-print(
-    "Scaler    :",
-    scaler_path
-)
-
-print(
-    "Threshold :",
-    threshold_path
-)
-
-print(
-    "Features  :",
-    feature_path
-)
-
-print(
-    "Errors    :",
-    error_path
-)
-
-print(
-    "History   :",
-    history_path
-)
+print("[OK] Model     :", model_path)
+print("[OK] Scaler    :", scaler_path)
+print("[OK] Threshold :", threshold_path)
+print("[OK] Features  :", feature_path)
+print("[OK] Errors    :", error_path)
+print("[OK] History   :", history_path)
 
 print("\n" + "=" * 60)
 print("REAL SENSOR AUTOENCODER TRAINING COMPLETED")

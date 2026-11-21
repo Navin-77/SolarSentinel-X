@@ -129,12 +129,23 @@ y = df["Health_Label"].values.astype(np.int32)
 
 
 # ============================================================
-# SCALE FEATURES
+# SCALE FEATURES (LEAK-FREE FROM TRAIN SPLIT)
 # ============================================================
 
-scaler = StandardScaler()
+leak_free_scaler_path = os.path.join(
+    BASE_DIR,
+    "dataset",
+    "real_processed",
+    "real_scaler.pkl"
+)
 
-X_scaled = scaler.fit_transform(X)
+if os.path.exists(leak_free_scaler_path):
+    scaler = joblib.load(leak_free_scaler_path)
+    X_scaled = scaler.transform(X)
+    print("Using leak-free scaler fitted on training split.")
+else:
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
 
 
 # ============================================================

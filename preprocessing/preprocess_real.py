@@ -1,6 +1,6 @@
 # =====================================================
 # SolarSentinel-X
-# Phase 13C : Real Sensor Data Preprocessing
+# Phase 13C : Real Sensor Data Preprocessing (Leak-Free)
 # =====================================================
 
 from pathlib import Path
@@ -35,7 +35,7 @@ OUTPUT_PATH.mkdir(exist_ok=True)
 
 
 # -----------------------------------------------------
-# REAL SENSOR FEATURES
+# REAL SENSOR FEATURES (10-Feature Schema)
 # -----------------------------------------------------
 
 FEATURE_COLUMNS = [
@@ -51,7 +51,6 @@ FEATURE_COLUMNS = [
     "Battery_Power",
 ]
 
-
 TARGET_COLUMN = "System_Health"
 
 
@@ -62,7 +61,7 @@ TARGET_COLUMN = "System_Health"
 def preprocess_real_dataset():
 
     print("=" * 70)
-    print("SOLARSENTINEL-X REAL SENSOR PREPROCESSING")
+    print("SOLARSENTINEL-X REAL SENSOR PREPROCESSING (LEAK-FREE)")
     print("=" * 70)
 
     # -------------------------------------------------
@@ -81,7 +80,6 @@ def preprocess_real_dataset():
     df = pd.read_csv(DATASET_PATH)
 
     print("\nDataset Loaded Successfully!")
-
     print(f"Rows    : {df.shape[0]}")
     print(f"Columns : {df.shape[1]}")
 
@@ -103,9 +101,7 @@ def preprocess_real_dataset():
     print(f"\nUsable labelled rows : {len(df)}")
 
     if len(df) == 0:
-        print("\nNo labelled real sensor data available yet.")
-        print("Preprocessing will begin after real labelled data")
-        print("has been collected from the ESP32.")
+        print("\nNo labelled real sensor data available.")
         return
 
     # -------------------------------------------------
@@ -157,81 +153,73 @@ def preprocess_real_dataset():
         print("\nNo valid numeric rows available.")
         return
 
-    # -------------------------------------------------
-    # Feature Scaling
-    # -------------------------------------------------
-
-    print("\n" + "=" * 70)
-    print("FEATURE SCALING")
-    print("=" * 70)
-
-    scaler = StandardScaler()
-
-    X_scaled = scaler.fit_transform(X)
-
-    print("\nScaling completed.")
-
-    print(f"Feature matrix shape : {X_scaled.shape}")
+    print("\nOverall class distribution:")
+    print(y.value_counts())
 
     # -------------------------------------------------
-    # Train-Test Split
+    # Train-Test Split (FIRST: Prevents Data Leakage)
     # -------------------------------------------------
 
     print("\n" + "=" * 70)
-    print("TRAIN-TEST SPLIT")
+    print("TRAIN-TEST SPLIT (LEAK-FREE)")
     print("=" * 70)
-
-    # Stratification is used only when every class has
-    # enough samples for a valid split.
 
     class_counts = y.value_counts()
 
     if len(class_counts) >= 2 and class_counts.min() >= 2:
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_scaled,
+        X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+            X,
             y,
             test_size=0.20,
             random_state=42,
             stratify=y
         )
-
     else:
+        print("\nNot enough labelled data for stratified split.")
+        X_train_raw = X.copy()
+        X_test_raw = X.copy()
+        y_train = y.copy()
+        y_test = y.copy()
 
-        print(
-            "\nNot enough labelled data for stratified split."
-        )
+    # -------------------------------------------------
+    # Feature Scaling (Fit on Train ONLY)
+    # -------------------------------------------------
 
-        print(
-            "Saving the processed dataset without train/test split."
-        )
+    print("\n" + "=" * 70)
+    print("FEATURE SCALING (FIT ON TRAIN ONLY)")
+    print("=" * 70)
 
-        X_train = X_scaled
-        X_test = X_scaled
-        y_train = y
-        y_test = y
+    scaler = StandardScaler()
+
+    # Fit ONLY on X_train to prevent any test distribution leakage
+    X_train_scaled = scaler.fit_transform(X_train_raw)
+    X_test_scaled = scaler.transform(X_test_raw)
+
+    print("\nScaling completed successfully without data leakage.")
+    print(f"X_train scaled shape : {X_train_scaled.shape}")
+    print(f"X_test scaled shape  : {X_test_scaled.shape}")
 
     # -------------------------------------------------
     # Save processed data
     # -------------------------------------------------
 
     X_train_df = pd.DataFrame(
-        X_train,
+        X_train_scaled,
         columns=FEATURE_COLUMNS
     )
 
     X_test_df = pd.DataFrame(
-        X_test,
+        X_test_scaled,
         columns=FEATURE_COLUMNS
     )
 
     y_train_df = pd.DataFrame(
-        y_train,
+        y_train.reset_index(drop=True),
         columns=[TARGET_COLUMN]
     )
 
     y_test_df = pd.DataFrame(
-        y_test,
+        y_test.reset_index(drop=True),
         columns=[TARGET_COLUMN]
     )
 
@@ -256,7 +244,7 @@ def preprocess_real_dataset():
     )
 
     # -------------------------------------------------
-    # Save scaler
+    # Save leak-free scaler
     # -------------------------------------------------
 
     joblib.dump(
@@ -276,27 +264,31 @@ def preprocess_real_dataset():
     )
 
     # -------------------------------------------------
-    # Final information
+    # Final Information & Class Distribution Breakdown
     # -------------------------------------------------
 
     print("\n" + "=" * 70)
     print("PREPROCESSING COMPLETED")
     print("=" * 70)
 
-    print(f"\nTraining samples : {len(X_train)}")
-    print(f"Testing samples  : {len(X_test)}")
+    print(f"\nTraining samples : {len(X_train_df)}")
+    print(f"Testing samples  : {len(X_test_df)}")
+
+    print("\nTrain class distribution:")
+    print(y_train_df[TARGET_COLUMN].value_counts())
+
+    print("\nTest class distribution:")
+    print(y_test_df[TARGET_COLUMN].value_counts())
 
     print("\nSaved files:")
+    print("[OK] X_train_real.csv")
+    print("[OK] X_test_real.csv")
+    print("[OK] y_train_real.csv")
+    print("[OK] y_test_real.csv")
+    print("[OK] real_scaler.pkl (Fitted on train split only)")
+    print("[OK] real_feature_names.csv")
 
-    print("✓ X_train_real.csv")
-    print("✓ X_test_real.csv")
-    print("✓ y_train_real.csv")
-    print("✓ y_test_real.csv")
-    print("✓ real_scaler.pkl")
-    print("✓ real_feature_names.csv")
-
-    print(f"\nOutput folder:")
-    print(OUTPUT_PATH)
+    print(f"\nOutput folder:\n{OUTPUT_PATH}")
 
 
 # =====================================================
